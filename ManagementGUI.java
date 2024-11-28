@@ -16,9 +16,13 @@ public class ManagementGUI extends JFrame {
     private JList<String> studentList;
     private JButton deleteBtn;
     private JPanel mainPanel;
+    private final String autoSavePath;
+    private JTextField nameTextField;
+    private JButton modifyBtn;
 
-    public ManagementGUI(List<Class> classes) {
+    public ManagementGUI(List<Class> classes, String autoSavePath) {
         this.allClasses = classes;
+        this.autoSavePath = autoSavePath;
         
         setTitle("班级管理系统");
         setSize(800, 500);
@@ -61,6 +65,16 @@ public class ManagementGUI extends JFrame {
         
         // 更新班级列表
         updateClassList();
+        
+        // 添加窗口关闭事件监听器
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                autoSaveData();
+                dispose();
+                System.exit(0);
+            }
+        });
     }
     
     private JPanel createPanel(String title, DefaultListModel<String> model, ListSelectionListener listener) {
@@ -134,7 +148,11 @@ public class ManagementGUI extends JFrame {
     }
     
     private void createButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+        // 创建两个面板：一个用于现有按钮，一个用于新的修改功能
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        
+        // 上半部分面板用于现有按钮
+        JPanel upperPanel = new JPanel(new FlowLayout());
         JButton addClassBtn = new JButton("添加班级");
         JButton addGroupBtn = new JButton("添加小组");
         JButton addStudentBtn = new JButton("添加学生");
@@ -153,14 +171,35 @@ public class ManagementGUI extends JFrame {
         importBtn.addActionListener(e -> importData());
         deleteBtn.addActionListener(e -> deleteSelected());
         
-        buttonPanel.add(addClassBtn);
-        buttonPanel.add(addGroupBtn);
-        buttonPanel.add(addStudentBtn);
-        buttonPanel.add(randomSelectBtn);
-        buttonPanel.add(addExampleDataBtn);
-        buttonPanel.add(exportBtn);
-        buttonPanel.add(importBtn);
-        buttonPanel.add(deleteBtn);
+        upperPanel.add(addClassBtn);
+        upperPanel.add(addGroupBtn);
+        upperPanel.add(addStudentBtn);
+        upperPanel.add(randomSelectBtn);
+        upperPanel.add(addExampleDataBtn);
+        upperPanel.add(exportBtn);
+        upperPanel.add(importBtn);
+        upperPanel.add(deleteBtn);
+        
+        // 下半部分面板用于名称修改功能
+        JPanel lowerPanel = new JPanel(new FlowLayout());
+        nameTextField = new JTextField(20);
+        modifyBtn = new JButton("修改名称");
+        
+        // 为三个列表添加选择监听器，更新文本框内容
+        classList.addListSelectionListener(e -> updateTextField(classList, "班级"));
+        groupList.addListSelectionListener(e -> updateTextField(groupList, "小组"));
+        studentList.addListSelectionListener(e -> updateTextField(studentList, "学生"));
+        
+        // 添加修改按钮的事件监听器
+        modifyBtn.addActionListener(e -> modifySelectedName());
+        
+        lowerPanel.add(new JLabel("名称："));
+        lowerPanel.add(nameTextField);
+        lowerPanel.add(modifyBtn);
+        
+        // 将两个面板添加到主按钮面板
+        buttonPanel.add(upperPanel);
+        buttonPanel.add(lowerPanel);
         
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
@@ -327,7 +366,7 @@ public class ManagementGUI extends JFrame {
         class3.addGroup(ai_group2);
         class3.addGroup(ai_group3);
         
-        // 将班���添加到列表
+        // 将班级添加到列表
         allClasses.add(class1);
         allClasses.add(class2);
         allClasses.add(class3);
@@ -609,6 +648,157 @@ public class ManagementGUI extends JFrame {
                     "成功",
                     JOptionPane.INFORMATION_MESSAGE);
             }
+        }
+    }
+    
+    private void autoSaveData() {
+        try {
+            File file = new File(autoSavePath);
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                // 写入班级数据
+                for (Class cls : allClasses) {
+                    writer.write("班级:" + cls.getClassName());
+                    writer.newLine();
+                    
+                    // 写入该班级的小组数据
+                    for (Group group : cls.getGroups()) {
+                        writer.write("    小组:" + group.getGroupName());
+                        writer.newLine();
+                        
+                        // 写入该小组的学生数据
+                        for (Student student : group.getStudents()) {
+                            writer.write("        学生:" + student.getName());
+                            writer.newLine();
+                        }
+                    }
+                }
+                System.out.println("数据已自动保存到: " + autoSavePath);
+            }
+        } catch (IOException ex) {
+            System.err.println("自动保存失败: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    public void importDataFromFile(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            // 清空现有数据
+            allClasses.clear();
+            classListModel.clear();
+            groupListModel.clear();
+            studentListModel.clear();
+            
+            String line;
+            Class currentClass = null;
+            Group currentGroup = null;
+            
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                
+                if (line.isEmpty()) {
+                    continue;
+                }
+                
+                if (line.startsWith("班级:")) {
+                    String className = line.substring(3).trim();
+                    if (!className.isEmpty()) {
+                        currentClass = new Class(className);
+                        allClasses.add(currentClass);
+                    }
+                }
+                else if (line.startsWith("    小组:") || line.startsWith("小组:")) {
+                    String groupName = line.contains("    小组:") ? 
+                                     line.substring(7).trim() : 
+                                     line.substring(3).trim();
+                    if (!groupName.isEmpty() && currentClass != null) {
+                        currentGroup = new Group(groupName);
+                        currentClass.addGroup(currentGroup);
+                    }
+                }
+                else if (line.startsWith("        学生:") || line.startsWith("学生:")) {
+                    String studentName = line.contains("        学生:") ? 
+                                       line.substring(11).trim() : 
+                                       line.substring(3).trim();
+                    if (!studentName.isEmpty() && currentGroup != null) {
+                        Student student = new Student(studentName);
+                        currentGroup.addStudent(student);
+                    }
+                }
+            }
+            
+            // 更新显示
+            updateClassList();
+            System.out.println("数据已从文件导入: " + filePath);
+            
+        } catch (IOException ex) {
+            System.err.println("导入失败: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    // 添加更新文本框的方法
+    private void updateTextField(JList<String> list, String type) {
+        if (!list.isSelectionEmpty()) {
+            String selectedName = list.getSelectedValue();
+            nameTextField.setText(selectedName);
+        }
+    }
+    
+    // 添加修改名称的方法
+    private void modifySelectedName() {
+        String newName = nameTextField.getText().trim();
+        if (newName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "请输入新名称！", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (studentList.getSelectedIndex() != -1) {
+            modifyStudentName(newName);
+        } else if (groupList.getSelectedIndex() != -1) {
+            modifyGroupName(newName);
+        } else if (classList.getSelectedIndex() != -1) {
+            modifyClassName(newName);
+        } else {
+            JOptionPane.showMessageDialog(this, "请先选择要修改的项目！", "提示", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void modifyClassName(String newName) {
+        int index = classList.getSelectedIndex();
+        if (index != -1) {
+            Class selectedClass = allClasses.get(index);
+            selectedClass.setClassName(newName);
+            updateClassList();
+            classList.setSelectedIndex(index);
+            JOptionPane.showMessageDialog(this, "班级名称修改成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void modifyGroupName(String newName) {
+        int classIndex = classList.getSelectedIndex();
+        int groupIndex = groupList.getSelectedIndex();
+        if (classIndex != -1 && groupIndex != -1) {
+            Class selectedClass = allClasses.get(classIndex);
+            Group selectedGroup = selectedClass.getGroups().get(groupIndex);
+            selectedGroup.setGroupName(newName);
+            showGroups();
+            groupList.setSelectedIndex(groupIndex);
+            JOptionPane.showMessageDialog(this, "小组名称修改成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void modifyStudentName(String newName) {
+        int classIndex = classList.getSelectedIndex();
+        int groupIndex = groupList.getSelectedIndex();
+        int studentIndex = studentList.getSelectedIndex();
+        if (classIndex != -1 && groupIndex != -1 && studentIndex != -1) {
+            Class selectedClass = allClasses.get(classIndex);
+            Group selectedGroup = selectedClass.getGroups().get(groupIndex);
+            Student selectedStudent = selectedGroup.getStudents().get(studentIndex);
+            selectedStudent.setName(newName);
+            showStudents();
+            studentList.setSelectedIndex(studentIndex);
+            JOptionPane.showMessageDialog(this, "学生姓名修改成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 } 
