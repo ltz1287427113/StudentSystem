@@ -31,11 +31,21 @@ public class Class {
     
     // 随机抽取学生
     public Student getRandomStudent() {
+        updateStudentsList();
+        
         if (students.isEmpty()) {
             return null;
         }
         Random random = new Random();
         return students.get(random.nextInt(students.size()));
+    }
+    
+    // 更新学生列表
+    private void updateStudentsList() {
+        students.clear();  // 清空现有学生列表
+        for (Group group : groups) {
+            students.addAll(group.getStudents());  // 重新收集所有小组的学生
+        }
     }
     
     // getter和setter方法
@@ -45,6 +55,8 @@ public class Class {
     public List<Group> getGroups() { return groups; }
     public void setGroups(List<Group> groups) { this.groups = groups; }
     
-    public List<Student> getStudents() { return students; }
-    public void setStudents(List<Student> students) { this.students = students; }
+    public List<Student> getStudents() { 
+        updateStudentsList(); // 确保返回最新的学生列表
+        return students; 
+    }
 } 
