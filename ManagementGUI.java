@@ -4,14 +4,13 @@ import java.awt.*;
 import java.util.List;
 
 public class ManagementGUI extends JFrame {
-    private List<Class> allClasses;
-    private DefaultListModel<String> classListModel;
-    private DefaultListModel<String> groupListModel;
-    private DefaultListModel<String> studentListModel;
+    private final List<Class> allClasses;
+    private final DefaultListModel<String> classListModel;
+    private final DefaultListModel<String> groupListModel;
+    private final DefaultListModel<String> studentListModel;
     private JList<String> classList;
     private JList<String> groupList;
-    private JList<String> studentList;
-    
+
     public ManagementGUI(List<Class> classes) {
         this.allClasses = classes;
         
@@ -82,7 +81,8 @@ public class ManagementGUI extends JFrame {
         if (listener != null) {
             list.addListSelectionListener(listener);
         }
-        
+
+        JList<String> studentList;
         if (title.equals("班级列表")) classList = list;
         else if (title.equals("小组列表")) groupList = list;
         else if (title.equals("学生列表")) studentList = list;
