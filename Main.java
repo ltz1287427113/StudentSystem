@@ -6,8 +6,21 @@ public class Main {
         // 创建班级列表
         List<Class> allClasses = new ArrayList<>();
         
-        // 创建并显示GUI
+        // 创建并显示管理界面
         ManagementGUI gui = new ManagementGUI(allClasses);
         gui.setVisible(true);
+    }
+    
+    // 添加用于测试的辅助方法
+    public static void printClassInfo(Class cls) {
+        System.out.println("班级: " + cls.getClassName());
+        System.out.println("小组数量: " + cls.getGroups().size());
+        for (Group group : cls.getGroups()) {
+            System.out.println("  小组: " + group.getGroupName());
+            System.out.println("  学生数量: " + group.getStudents().size());
+            for (Student student : group.getStudents()) {
+                System.out.println("    学生: " + student.getName());
+            }
+        }
     }
 } 

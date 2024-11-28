@@ -1,15 +1,21 @@
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.*;
 import java.util.List;
 
 public class ManagementGUI extends JFrame {
-    private final List<Class> allClasses;
-    private final DefaultListModel<String> classListModel;
-    private final DefaultListModel<String> groupListModel;
-    private final DefaultListModel<String> studentListModel;
+    private List<Class> allClasses;
+    private DefaultListModel<String> classListModel;
+    private DefaultListModel<String> groupListModel;
+    private DefaultListModel<String> studentListModel;
     private JList<String> classList;
     private JList<String> groupList;
+    private JList<String> studentList;
+    private JButton deleteBtn;
+    private JPanel mainPanel;
 
     public ManagementGUI(List<Class> classes) {
         this.allClasses = classes;
@@ -19,10 +25,10 @@ public class ManagementGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // 创建主面板，使用BorderLayout
-        JPanel mainPanel = new JPanel(new BorderLayout());
+        // 创建主面板
+        mainPanel = new JPanel(new BorderLayout());
         
-        // 创建列表面板，使用GridLayout
+        // 创建列表面板
         JPanel listsPanel = new JPanel(new GridLayout(1, 3, 10, 0));
         
         // 初始化列表模型
@@ -44,30 +50,11 @@ public class ManagementGUI extends JFrame {
         listsPanel.add(groupPanel);
         listsPanel.add(studentPanel);
         
-        // 创建按钮面板
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        JButton addClassBtn = new JButton("添加班级");
-        JButton addGroupBtn = new JButton("添加小组");
-        JButton addStudentBtn = new JButton("添加学生");
-        JButton randomSelectBtn = new JButton("随机点名");
-        JButton addExampleDataBtn = new JButton("添加示例数据");
-        
-        // 添加按钮事件
-        addClassBtn.addActionListener(e -> addClass());
-        addGroupBtn.addActionListener(e -> addGroup());
-        addStudentBtn.addActionListener(e -> addStudent());
-        randomSelectBtn.addActionListener(e -> openRandomSelectWindow());
-        addExampleDataBtn.addActionListener(e -> addExampleData());
-        
-        buttonPanel.add(addClassBtn);
-        buttonPanel.add(addGroupBtn);
-        buttonPanel.add(addStudentBtn);
-        buttonPanel.add(randomSelectBtn);
-        buttonPanel.add(addExampleDataBtn);
-        
-        // 添加面板到主面板
+        // 添加列表面板到主面板
         mainPanel.add(listsPanel, BorderLayout.CENTER);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // 创建按钮面板
+        createButtonPanel();
         
         // 添加主面板到窗口
         add(mainPanel);
@@ -84,14 +71,98 @@ public class ManagementGUI extends JFrame {
         if (listener != null) {
             list.addListSelectionListener(listener);
         }
-
-        JList<String> studentList;
-        if (title.equals("班级列表")) classList = list;
-        else if (title.equals("小组列表")) groupList = list;
-        else if (title.equals("学生列表")) studentList = list;
+        
+        // 根据标题存储对应的JList引用
+        if (title.equals("班级列表")) {
+            classList = list;
+            // 为班级列表添加鼠标监听器
+            list.addMouseListener(new MouseAdapter() {
+                private int lastSelectedIndex = -1;
+                
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int currentIndex = list.locationToIndex(e.getPoint());
+                    if (currentIndex == lastSelectedIndex) {
+                        list.clearSelection();
+                        groupListModel.clear();
+                        studentListModel.clear();
+                        lastSelectedIndex = -1;
+                    } else {
+                        lastSelectedIndex = currentIndex;
+                    }
+                }
+            });
+        } else if (title.equals("小组列表")) {
+            groupList = list;
+            // 为小组列表添加鼠标监听器
+            list.addMouseListener(new MouseAdapter() {
+                private int lastSelectedIndex = -1;
+                
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int currentIndex = list.locationToIndex(e.getPoint());
+                    if (currentIndex == lastSelectedIndex) {
+                        list.clearSelection();
+                        studentListModel.clear();
+                        lastSelectedIndex = -1;
+                    } else {
+                        lastSelectedIndex = currentIndex;
+                    }
+                }
+            });
+        } else if (title.equals("学生列表")) {
+            studentList = list;
+            // 为学生列表添加鼠标监听器
+            list.addMouseListener(new MouseAdapter() {
+                private int lastSelectedIndex = -1;
+                
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int currentIndex = list.locationToIndex(e.getPoint());
+                    if (currentIndex == lastSelectedIndex) {
+                        list.clearSelection();
+                        lastSelectedIndex = -1;
+                    } else {
+                        lastSelectedIndex = currentIndex;
+                    }
+                }
+            });
+        }
         
         panel.add(new JScrollPane(list), BorderLayout.CENTER);
         return panel;
+    }
+    
+    private void createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton addClassBtn = new JButton("添加班级");
+        JButton addGroupBtn = new JButton("添加小组");
+        JButton addStudentBtn = new JButton("添加学生");
+        JButton randomSelectBtn = new JButton("随机点名");
+        JButton addExampleDataBtn = new JButton("添加示例数据");
+        JButton exportBtn = new JButton("导出数据");
+        JButton importBtn = new JButton("导入数据");
+        deleteBtn = new JButton("删除选中项");
+        
+        addClassBtn.addActionListener(e -> addClass());
+        addGroupBtn.addActionListener(e -> addGroup());
+        addStudentBtn.addActionListener(e -> addStudent());
+        randomSelectBtn.addActionListener(e -> openRandomSelectWindow());
+        addExampleDataBtn.addActionListener(e -> addExampleData());
+        exportBtn.addActionListener(e -> exportData());
+        importBtn.addActionListener(e -> importData());
+        deleteBtn.addActionListener(e -> deleteSelected());
+        
+        buttonPanel.add(addClassBtn);
+        buttonPanel.add(addGroupBtn);
+        buttonPanel.add(addStudentBtn);
+        buttonPanel.add(randomSelectBtn);
+        buttonPanel.add(addExampleDataBtn);
+        buttonPanel.add(exportBtn);
+        buttonPanel.add(importBtn);
+        buttonPanel.add(deleteBtn);
+        
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
     
     private void addClass() {
@@ -256,7 +327,7 @@ public class ManagementGUI extends JFrame {
         class3.addGroup(ai_group2);
         class3.addGroup(ai_group3);
         
-        // 将班级添加到列表
+        // 将班���添加到列表
         allClasses.add(class1);
         allClasses.add(class2);
         allClasses.add(class3);
@@ -271,5 +342,273 @@ public class ManagementGUI extends JFrame {
             "添加成功",
             JOptionPane.INFORMATION_MESSAGE
         );
+    }
+    
+    private void exportData() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("选择保存位置");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            // 如果文件名没有.txt后缀，添加后缀
+            if (!file.getName().toLowerCase().endsWith(".txt")) {
+                file = new File(file.getAbsolutePath() + ".txt");
+            }
+            
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                // 写入班级数据
+                for (Class cls : allClasses) {
+                    writer.write("班级:" + cls.getClassName());
+                    writer.newLine();
+                    
+                    // 写入该班级的小组数据
+                    for (Group group : cls.getGroups()) {
+                        writer.write("    小组:" + group.getGroupName());
+                        writer.newLine();
+                        
+                        // 写入该小组的学生数据
+                        for (Student student : group.getStudents()) {
+                            writer.write("        学生:" + student.getName());
+                            writer.newLine();
+                        }
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(this, 
+                    "数据导出成功！\n保存位置：" + file.getAbsolutePath(),
+                    "导出成功",
+                    JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "导出失败：" + ex.getMessage(),
+                    "错误",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+    
+    private void importData() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("选择要导入的文件");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                // 确认是否覆盖现有数据
+                if (!allClasses.isEmpty()) {
+                    int choice = JOptionPane.showConfirmDialog(this,
+                        "导入将覆盖现有数据，是否继续？",
+                        "确认导入",
+                        JOptionPane.YES_NO_OPTION);
+                    if (choice != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
+                
+                // 清空现有数据
+                allClasses.clear();
+                classListModel.clear();
+                groupListModel.clear();
+                studentListModel.clear();
+                
+                String line;
+                Class currentClass = null;
+                Group currentGroup = null;
+                int classCount = 0;
+                int groupCount = 0;
+                int studentCount = 0;
+                
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    
+                    if (line.isEmpty()) {
+                        continue;  // 跳过空行
+                    }
+                    
+                    try {
+                        if (line.startsWith("班级:")) {
+                            String className = line.substring(3).trim();
+                            if (!className.isEmpty()) {
+                                currentClass = new Class(className);
+                                allClasses.add(currentClass);
+                                classCount++;
+                                System.out.println("导入班级: " + className);
+                            }
+                        }
+                        else if (line.startsWith("    小组:") || line.startsWith("小组:")) {
+                            String groupName = line.contains("    小组:") ? 
+                                             line.substring(7).trim() : 
+                                             line.substring(3).trim();
+                            if (!groupName.isEmpty() && currentClass != null) {
+                                currentGroup = new Group(groupName);
+                                currentClass.addGroup(currentGroup);
+                                groupCount++;
+                                System.out.println("导入小组: " + groupName + " 到班级: " + currentClass.getClassName());
+                            }
+                        }
+                        else if (line.startsWith("        学生:") || line.startsWith("学生:")) {
+                            String studentName = line.contains("        学生:") ? 
+                                               line.substring(11).trim() : 
+                                               line.substring(3).trim();
+                            if (!studentName.isEmpty() && currentGroup != null) {
+                                Student student = new Student(studentName);
+                                currentGroup.addStudent(student);
+                                studentCount++;
+                                System.out.println("导入学生: " + studentName + " 到小组: " + currentGroup.getGroupName());
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println("处理行时出错: " + line);
+                        e.printStackTrace();
+                    }
+                }
+                
+                // 更新显示
+                updateClassList();
+                
+                // 如果有选中的班级，更新其小组列表
+                if (classList.getSelectedIndex() != -1) {
+                    showGroups();
+                }
+                
+                // 如果有选中的小组，更新其学生列表
+                if (groupList.getSelectedIndex() != -1) {
+                    showStudents();
+                }
+                
+                // 打印导入后的数据状态
+                System.out.println("\n导入后的数据状态：");
+                for (Class cls : allClasses) {
+                    Main.printClassInfo(cls);
+                }
+                
+                if (classCount > 0 || groupCount > 0 || studentCount > 0) {
+                    JOptionPane.showMessageDialog(this,
+                        String.format("数据导入成功！\n共导入：\n%d 个班级\n%d 个小组\n%d 名学生", 
+                            classCount, groupCount, studentCount),
+                        "导入成功",
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "未能导入任何数据，请检查文件格式是否正确。",
+                        "导入提示",
+                        JOptionPane.WARNING_MESSAGE);
+                }
+                    
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "导入失败" + ex.getMessage(),
+                    "错误",
+                    JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+    
+    private void deleteSelected() {
+        if (studentList != null && studentList.getSelectedIndex() != -1) {
+            deleteStudent();
+        }
+        else if (groupList != null && groupList.getSelectedIndex() != -1) {
+            deleteGroup();
+        }
+        else if (classList != null && classList.getSelectedIndex() != -1) {
+            deleteClass();
+        }
+        else {
+            JOptionPane.showMessageDialog(this,
+                "请先选择要删除的项目",
+                "提示",
+                JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void deleteClass() {
+        if (classList == null) {
+            return;
+        }
+        
+        int selectedIndex = classList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            String className = classListModel.getElementAt(selectedIndex);
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "确定要删除班级 '" + className + "' 及其所有小组和学生吗？",
+                "确认删除",
+                JOptionPane.YES_NO_OPTION);
+                
+            if (confirm == JOptionPane.YES_OPTION) {
+                allClasses.remove(selectedIndex);
+                updateClassList();
+                groupListModel.clear();
+                studentListModel.clear();
+                JOptionPane.showMessageDialog(this,
+                    "班级删除成功！",
+                    "成功",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+    
+    private void deleteGroup() {
+        if (classList == null || groupList == null) {
+            return;
+        }
+        
+        int classIndex = classList.getSelectedIndex();
+        int groupIndex = groupList.getSelectedIndex();
+        
+        if (classIndex != -1 && groupIndex != -1) {
+            Class selectedClass = allClasses.get(classIndex);
+            String groupName = groupListModel.getElementAt(groupIndex);
+            
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "确定要删除小组 '" + groupName + "' 及其所有学生吗？",
+                "确认删除",
+                JOptionPane.YES_NO_OPTION);
+                
+            if (confirm == JOptionPane.YES_OPTION) {
+                selectedClass.getGroups().remove(groupIndex);
+                showGroups();
+                studentListModel.clear();
+                JOptionPane.showMessageDialog(this,
+                    "小组删除成功！",
+                    "成功",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+    
+    private void deleteStudent() {
+        if (classList == null || groupList == null || studentList == null) {
+            return;
+        }
+        
+        int classIndex = classList.getSelectedIndex();
+        int groupIndex = groupList.getSelectedIndex();
+        int studentIndex = studentList.getSelectedIndex();
+        
+        if (classIndex != -1 && groupIndex != -1 && studentIndex != -1) {
+            Class selectedClass = allClasses.get(classIndex);
+            Group selectedGroup = selectedClass.getGroups().get(groupIndex);
+            String studentName = studentListModel.getElementAt(studentIndex);
+            
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "确定要删除学生 '" + studentName + "' 吗？",
+                "确认删除",
+                JOptionPane.YES_NO_OPTION);
+                
+            if (confirm == JOptionPane.YES_OPTION) {
+                selectedGroup.getStudents().remove(studentIndex);
+                showStudents();
+                JOptionPane.showMessageDialog(this,
+                    "学生删除成功！",
+                    "成功",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
     }
 } 

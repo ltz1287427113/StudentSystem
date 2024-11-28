@@ -1,8 +1,10 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Group {
+public class Group implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String groupName;           // 小组名称
     private List<Student> students;     // 小组成员
     
