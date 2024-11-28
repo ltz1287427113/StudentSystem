@@ -4,12 +4,11 @@ import java.awt.event.*;
 import java.util.List;
 
 public class RandomSelectGUI extends JFrame {
-    private List<Class> allClasses;
-    private JLabel resultLabel;
-    private JButton randomClassBtn;
-    private JButton randomGroupBtn;
-    private JButton randomStudentFromGroupBtn;
-    private JButton randomStudentFromClassBtn;
+    private final List<Class> allClasses;
+    private final JLabel resultLabel;
+    private final JButton randomGroupBtn;
+    private final JButton randomStudentFromGroupBtn;
+    private final JButton randomStudentFromClassBtn;
     
     private Class currentClass;
     private Group currentGroup;
@@ -20,7 +19,7 @@ public class RandomSelectGUI extends JFrame {
         // 设置窗口
         setTitle("随机点名系统");
         setSize(600, 400);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         
         // 创建主面板
@@ -39,7 +38,7 @@ public class RandomSelectGUI extends JFrame {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // 创建按钮
-        randomClassBtn = new JButton("随机抽取班级");
+        JButton randomClassBtn = new JButton("随机抽取班级");
         randomGroupBtn = new JButton("随机抽取小组");
         randomStudentFromGroupBtn = new JButton("从小组抽取学生");
         randomStudentFromClassBtn = new JButton("从班级抽取学生");
