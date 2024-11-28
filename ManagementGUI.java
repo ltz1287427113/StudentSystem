@@ -16,9 +16,11 @@ public class ManagementGUI extends JFrame {
     private JList<String> studentList;
     private JButton deleteBtn;
     private JPanel mainPanel;
+    private final String autoSavePath;
 
-    public ManagementGUI(List<Class> classes) {
+    public ManagementGUI(List<Class> classes, String autoSavePath) {
         this.allClasses = classes;
+        this.autoSavePath = autoSavePath;
         
         setTitle("班级管理系统");
         setSize(800, 500);
@@ -61,6 +63,16 @@ public class ManagementGUI extends JFrame {
         
         // 更新班级列表
         updateClassList();
+        
+        // 添加窗口关闭事件监听器
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                autoSaveData();
+                dispose();
+                System.exit(0);
+            }
+        });
     }
     
     private JPanel createPanel(String title, DefaultListModel<String> model, ListSelectionListener listener) {
@@ -327,7 +339,7 @@ public class ManagementGUI extends JFrame {
         class3.addGroup(ai_group2);
         class3.addGroup(ai_group3);
         
-        // 将班���添加到列表
+        // 将班级添加到列表
         allClasses.add(class1);
         allClasses.add(class2);
         allClasses.add(class3);
@@ -609,6 +621,91 @@ public class ManagementGUI extends JFrame {
                     "成功",
                     JOptionPane.INFORMATION_MESSAGE);
             }
+        }
+    }
+    
+    private void autoSaveData() {
+        try {
+            File file = new File(autoSavePath);
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                // 写入班级数据
+                for (Class cls : allClasses) {
+                    writer.write("班级:" + cls.getClassName());
+                    writer.newLine();
+                    
+                    // 写入该班级的小组数据
+                    for (Group group : cls.getGroups()) {
+                        writer.write("    小组:" + group.getGroupName());
+                        writer.newLine();
+                        
+                        // 写入该小组的学生数据
+                        for (Student student : group.getStudents()) {
+                            writer.write("        学生:" + student.getName());
+                            writer.newLine();
+                        }
+                    }
+                }
+                System.out.println("数据已自动保存到: " + autoSavePath);
+            }
+        } catch (IOException ex) {
+            System.err.println("自动保存失败: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    public void importDataFromFile(String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            // 清空现有数据
+            allClasses.clear();
+            classListModel.clear();
+            groupListModel.clear();
+            studentListModel.clear();
+            
+            String line;
+            Class currentClass = null;
+            Group currentGroup = null;
+            
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                
+                if (line.isEmpty()) {
+                    continue;
+                }
+                
+                if (line.startsWith("班级:")) {
+                    String className = line.substring(3).trim();
+                    if (!className.isEmpty()) {
+                        currentClass = new Class(className);
+                        allClasses.add(currentClass);
+                    }
+                }
+                else if (line.startsWith("    小组:") || line.startsWith("小组:")) {
+                    String groupName = line.contains("    小组:") ? 
+                                     line.substring(7).trim() : 
+                                     line.substring(3).trim();
+                    if (!groupName.isEmpty() && currentClass != null) {
+                        currentGroup = new Group(groupName);
+                        currentClass.addGroup(currentGroup);
+                    }
+                }
+                else if (line.startsWith("        学生:") || line.startsWith("学生:")) {
+                    String studentName = line.contains("        学生:") ? 
+                                       line.substring(11).trim() : 
+                                       line.substring(3).trim();
+                    if (!studentName.isEmpty() && currentGroup != null) {
+                        Student student = new Student(studentName);
+                        currentGroup.addStudent(student);
+                    }
+                }
+            }
+            
+            // 更新显示
+            updateClassList();
+            System.out.println("数据已从文件导入: " + filePath);
+            
+        } catch (IOException ex) {
+            System.err.println("导入失败: " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 } 
