@@ -65,7 +65,8 @@ public class RandomSelectGUI extends JFrame {
         // 添加主面板到窗口
         add(mainPanel);
     }
-    
+
+    //随机选择班级
     private void randomSelectClass() {
         if (allClasses.isEmpty()) {
             showMessage("没有可用的班级！");
@@ -79,7 +80,8 @@ public class RandomSelectGUI extends JFrame {
         randomStudentFromClassBtn.setEnabled(true);
         randomStudentFromGroupBtn.setEnabled(false);
     }
-    
+
+    //随机选择小组
     private void randomSelectGroup() {
         if (currentClass == null) {
             showMessage("请先选择班级！");
@@ -95,7 +97,8 @@ public class RandomSelectGUI extends JFrame {
         showResult("选中小组：" + currentGroup.getGroupName());
         randomStudentFromGroupBtn.setEnabled(true);
     }
-    
+
+    //从小组中随机选择学生
     private void randomSelectStudentFromGroup() {
         if (currentGroup == null) {
             showMessage("请先选择小组！");
@@ -110,7 +113,8 @@ public class RandomSelectGUI extends JFrame {
         
         showResult("从小组中选中学生：" + student.getName());
     }
-    
+
+    //从班级中随机选择学生
     private void randomSelectStudentFromClass() {
         if (currentClass == null) {
             showMessage("请先选择班级！");
@@ -125,7 +129,8 @@ public class RandomSelectGUI extends JFrame {
         
         showResult("从班级中选中学生：" + student.getName());
     }
-    
+
+    //处理用户界面上的消息
     private void showResult(String message) {
         resultLabel.setText(message);
     }

@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
+    //定义自动保存文件的路径常量。
     private static final String AUTO_SAVE_PATH = "E:\\data-student\\auto-save.txt";
     
     public static void main(String[] args) {

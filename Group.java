@@ -9,6 +9,9 @@ public class Group implements Serializable {
     private List<Student> students;     // 小组成员
     
     // 构造方法
+    public Group() {
+    }
+
     public Group(String groupName) {
         this.groupName = groupName;
         this.students = new ArrayList<>();

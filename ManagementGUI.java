@@ -20,6 +20,7 @@ public class ManagementGUI extends JFrame {
     private JTextField nameTextField;
     private JButton modifyBtn;
 
+    //创建主窗口和各个面板
     public ManagementGUI(List<Class> classes, String autoSavePath) {
         this.allClasses = classes;
         this.autoSavePath = autoSavePath;
@@ -76,7 +77,8 @@ public class ManagementGUI extends JFrame {
             }
         });
     }
-    
+
+    //建一个包含标题和 JList 的面板，能够动态显示班级列表、小组列表和学生列表
     private JPanel createPanel(String title, DefaultListModel<String> model, ListSelectionListener listener) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder(title));
@@ -146,7 +148,8 @@ public class ManagementGUI extends JFrame {
         panel.add(new JScrollPane(list), BorderLayout.CENTER);
         return panel;
     }
-    
+
+    // 创建操作按钮面板
     private void createButtonPanel() {
         // 创建两个面板：一个用于现有按钮，一个用于新的修改功能
         JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -203,7 +206,8 @@ public class ManagementGUI extends JFrame {
         
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
-    
+
+    //添加班级
     private void addClass() {
         String className = JOptionPane.showInputDialog(this, "请输入班级名称：");
         if (className != null && !className.trim().isEmpty()) {
@@ -212,7 +216,8 @@ public class ManagementGUI extends JFrame {
             updateClassList();
         }
     }
-    
+
+    //添加小组
     private void addGroup() {
         int selectedIndex = classList.getSelectedIndex();
         if (selectedIndex == -1) {
@@ -228,7 +233,8 @@ public class ManagementGUI extends JFrame {
             showGroups();
         }
     }
-    
+
+    //添加学生
     private void addStudent() {
         int classIndex = classList.getSelectedIndex();
         int groupIndex = groupList.getSelectedIndex();
@@ -247,14 +253,16 @@ public class ManagementGUI extends JFrame {
             showStudents();
         }
     }
-    
+
+    //更新班级列表
     private void updateClassList() {
         classListModel.clear();
         for (Class c : allClasses) {
             classListModel.addElement(c.getClassName());
         }
     }
-    
+
+    //显示小组列表
     private void showGroups() {
         groupListModel.clear();
         int selectedIndex = classList.getSelectedIndex();
@@ -265,7 +273,8 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //显示学生列表
     private void showStudents() {
         studentListModel.clear();
         int classIndex = classList.getSelectedIndex();
@@ -279,12 +288,14 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //打开一个点名系统窗口
     private void openRandomSelectWindow() {
         RandomSelectGUI randomSelectGUI = new RandomSelectGUI(allClasses);
         randomSelectGUI.setVisible(true);
     }
-    
+
+    //添加示例数据
     private void addExampleData() {
         // 确认对话框
         int choice = JOptionPane.showConfirmDialog(
@@ -382,7 +393,8 @@ public class ManagementGUI extends JFrame {
             JOptionPane.INFORMATION_MESSAGE
         );
     }
-    
+
+    //导出数据到文件
     private void exportData() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("选择保存位置");
@@ -427,7 +439,8 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //从文件导入数据
     private void importData() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("选择要导入的文件");
@@ -547,7 +560,8 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //删除选中项
     private void deleteSelected() {
         if (studentList != null && studentList.getSelectedIndex() != -1) {
             deleteStudent();
@@ -565,7 +579,8 @@ public class ManagementGUI extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
+
+    //删除班级
     private void deleteClass() {
         if (classList == null) {
             return;
@@ -591,7 +606,8 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //删除小组
     private void deleteGroup() {
         if (classList == null || groupList == null) {
             return;
@@ -620,7 +636,8 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //删除学生
     private void deleteStudent() {
         if (classList == null || groupList == null || studentList == null) {
             return;
@@ -650,7 +667,8 @@ public class ManagementGUI extends JFrame {
             }
         }
     }
-    
+
+    //自动保存数据
     private void autoSaveData() {
         try {
             File file = new File(autoSavePath);
@@ -680,6 +698,7 @@ public class ManagementGUI extends JFrame {
         }
     }
     
+    //程序启动时加载之前保存的数据
     public void importDataFromFile(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             // 清空现有数据
@@ -736,7 +755,7 @@ public class ManagementGUI extends JFrame {
         }
     }
     
-    // 添加更新文本框的方法
+    // 文本框显示
     private void updateTextField(JList<String> list, String type) {
         if (!list.isSelectionEmpty()) {
             String selectedName = list.getSelectedValue();
@@ -762,7 +781,8 @@ public class ManagementGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "请先选择要修改的项目！", "提示", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
+
+    // 修改班级名称
     private void modifyClassName(String newName) {
         int index = classList.getSelectedIndex();
         if (index != -1) {
@@ -773,7 +793,8 @@ public class ManagementGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "班级名称修改成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
+
+    // 修改小组名称
     private void modifyGroupName(String newName) {
         int classIndex = classList.getSelectedIndex();
         int groupIndex = groupList.getSelectedIndex();
@@ -786,7 +807,8 @@ public class ManagementGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "小组名称修改成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
+
+    // 修改学生名称
     private void modifyStudentName(String newName) {
         int classIndex = classList.getSelectedIndex();
         int groupIndex = groupList.getSelectedIndex();

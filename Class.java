@@ -8,32 +8,39 @@ public class Class implements Serializable {
     private String className;           
     private List<Group> groups;         
     private List<Student> students;     
-    
+
+    // 构造方法
+
+    public Class() {
+    }
+
     public Class(String className) {
         this.className = className;
         this.groups = new ArrayList<>();
         this.students = new ArrayList<>();
     }
-    
+
+    //添加小组到班级
     public void addGroup(Group group) {
-        if (group != null) {
+        if (group != null) {//检查传入的group是否为null
             boolean exists = false;
             for (Group g : groups) {
-                if (g.getGroupName().equals(group.getGroupName())) {
+                if (g.getGroupName().equals(group.getGroupName())) {//检查该小组名称是否已存在
                     exists = true;
                     break;
                 }
             }
-            
+            //如果该小组名称不存在，则添加该小组
             if (!exists) {
                 groups.add(group);
-                if (group.getStudents() != null) {
+                if (group.getStudents() != null) { //检查小组中的学生是否为null
                     students.addAll(group.getStudents());
                 }
             }
         }
     }
     
+    //随机抽取一个小组
     public Group getRandomGroup() {
         if (groups.isEmpty()) {
             return null;
