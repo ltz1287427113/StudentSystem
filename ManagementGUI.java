@@ -105,6 +105,8 @@ public class ManagementGUI extends JFrame {
                         lastSelectedIndex = -1;
                     } else {
                         lastSelectedIndex = currentIndex;
+                        showGroups();
+                        showStudents();
                     }
                 }
             });
@@ -237,17 +239,58 @@ public class ManagementGUI extends JFrame {
     //添加学生
     private void addStudent() {
         int classIndex = classList.getSelectedIndex();
-        int groupIndex = groupList.getSelectedIndex();
         
-        if (classIndex == -1 || groupIndex == -1) {
-            JOptionPane.showMessageDialog(this, "请先选择班级和小组！");
+        if (classIndex == -1) {
+            JOptionPane.showMessageDialog(this, "请先选择班级！");
             return;
         }
         
+        Class selectedClass = allClasses.get(classIndex);
+        int groupIndex = groupList.getSelectedIndex();
+        Group selectedGroup;
+        
+        // 如果没有选择小组，让用户选择要添加到哪个小组
+        if (groupIndex == -1) {
+            if (selectedClass.getGroups().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "该班级还没有小组，请先创建小组！");
+                return;
+            }
+            
+            // 创建小组选择对话框
+            String[] groupNames = new String[selectedClass.getGroups().size()];
+            for (int i = 0; i < selectedClass.getGroups().size(); i++) {
+                groupNames[i] = selectedClass.getGroups().get(i).getGroupName();
+            }
+            
+            String selectedGroupName = (String) JOptionPane.showInputDialog(
+                this,
+                "请选择要添加到哪个小组：",
+                "选择小组",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                groupNames,
+                groupNames[0]
+            );
+            
+            if (selectedGroupName == null) {
+                return; // 用户取消选择
+            }
+            
+            // 找到选择的小组
+            selectedGroup = null;
+            for (Group group : selectedClass.getGroups()) {
+                if (group.getGroupName().equals(selectedGroupName)) {
+                    selectedGroup = group;
+                    break;
+                }
+            }
+        } else {
+            selectedGroup = selectedClass.getGroups().get(groupIndex);
+        }
+        
+        // 输入学生姓名
         String studentName = JOptionPane.showInputDialog(this, "请输入学生姓名：");
         if (studentName != null && !studentName.trim().isEmpty()) {
-            Class selectedClass = allClasses.get(classIndex);
-            Group selectedGroup = selectedClass.getGroups().get(groupIndex);
             Student newStudent = new Student(studentName);
             selectedGroup.addStudent(newStudent);
             showStudents();
@@ -278,13 +321,33 @@ public class ManagementGUI extends JFrame {
     private void showStudents() {
         studentListModel.clear();
         int classIndex = classList.getSelectedIndex();
-        int groupIndex = groupList.getSelectedIndex();
         
-        if (classIndex != -1 && groupIndex != -1) {
+        if (classIndex != -1) {
             Class selectedClass = allClasses.get(classIndex);
-            Group selectedGroup = selectedClass.getGroups().get(groupIndex);
-            for (Student s : selectedGroup.getStudents()) {
-                studentListModel.addElement(s.getName());
+            int groupIndex = groupList.getSelectedIndex();
+            
+            if (groupIndex != -1) {
+                // 显示选中小组的学生
+                Group selectedGroup = selectedClass.getGroups().get(groupIndex);
+                for (Student s : selectedGroup.getStudents()) {
+                    studentListModel.addElement(s.getName());
+                }
+            } else {
+                // 显示全班学生
+                for (Group group : selectedClass.getGroups()) {
+                    for (Student s : group.getStudents()) {
+                        studentListModel.addElement(s.getName());
+                    }
+                }
+            }
+            
+            // 如果学生列表为空，显示提示信息
+            if (studentListModel.isEmpty()) {
+                if (groupIndex != -1) {
+                    studentListModel.addElement("该小组暂无学生");
+                } else {
+                    studentListModel.addElement("该班级暂无学生");
+                }
             }
         }
     }
@@ -639,17 +702,15 @@ public class ManagementGUI extends JFrame {
 
     //删除学生
     private void deleteStudent() {
-        if (classList == null || groupList == null || studentList == null) {
+        if (classList == null || studentList == null) {
             return;
         }
         
         int classIndex = classList.getSelectedIndex();
-        int groupIndex = groupList.getSelectedIndex();
         int studentIndex = studentList.getSelectedIndex();
         
-        if (classIndex != -1 && groupIndex != -1 && studentIndex != -1) {
+        if (classIndex != -1 && studentIndex != -1) {
             Class selectedClass = allClasses.get(classIndex);
-            Group selectedGroup = selectedClass.getGroups().get(groupIndex);
             String studentName = studentListModel.getElementAt(studentIndex);
             
             int confirm = JOptionPane.showConfirmDialog(this,
@@ -658,7 +719,25 @@ public class ManagementGUI extends JFrame {
                 JOptionPane.YES_NO_OPTION);
                 
             if (confirm == JOptionPane.YES_OPTION) {
-                selectedGroup.getStudents().remove(studentIndex);
+                int groupIndex = groupList.getSelectedIndex();
+                
+                if (groupIndex != -1) {
+                    // 如果选中了小组，从小组中删除学生
+                    Group selectedGroup = selectedClass.getGroups().get(groupIndex);
+                    selectedGroup.getStudents().remove(studentIndex);
+                } else {
+                    // 如果只选中了班级，需要遍历所有小组找到并删除该学生
+                    String targetStudent = studentName;
+                    for (Group group : selectedClass.getGroups()) {
+                        for (int i = 0; i < group.getStudents().size(); i++) {
+                            if (group.getStudents().get(i).getName().equals(targetStudent)) {
+                                group.getStudents().remove(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
                 showStudents();
                 JOptionPane.showMessageDialog(this,
                     "学生删除成功！",
